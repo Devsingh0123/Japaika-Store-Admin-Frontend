@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   ArrowUpRight,
   FolderTree,
+  Package,
   Shield,
   ShieldCheck,
   ShieldOff,
@@ -29,12 +30,14 @@ import {
 import { formatDateTime } from "@/lib/format";
 
 const ACCESS_DIRECTORY: readonly {
+  id: string;
   key: AdminModuleKey;
   label: string;
   description: string;
   href?: string;
 }[] = [
   {
+    id: "categories",
     key: "catalog",
     label: "Categories & Subcategories",
     description:
@@ -42,42 +45,58 @@ const ACCESS_DIRECTORY: readonly {
     href: "/categories",
   },
   {
+    id: "products",
+    key: "catalog",
+    label: "Products & Variants",
+    description:
+      "Manage simple and variant products, GST-inclusive pricing, media, certificates, and specifications.",
+    href: "/products",
+  },
+  {
+    id: "inventory",
     key: "inventory",
     label: "Inventory & Stock Controls",
     description:
-      "Track SKU stock levels, unique gemstone counts, and adjustment reasons.",
+      "Track SKU stock levels, low-stock thresholds, and per-variant availability.",
+    href: "/products",
   },
   {
+    id: "orders",
     key: "orders",
     label: "Orders & Fulfillment",
     description:
       "Review orders, advance fulfillment states, and attach courier AWB tracking.",
   },
   {
+    id: "payments",
     key: "payments",
     label: "Payments & Refunds",
     description:
       "Inspect payment records, reconcile transactions, and issue guarded refunds.",
   },
   {
+    id: "coupons",
     key: "coupons",
     label: "Coupons & Promotions",
     description:
       "Configure discount rules, eligibility thresholds, and usage limits.",
   },
   {
+    id: "customers",
     key: "customers",
     label: "Customer Directory",
     description:
       "Look up customer profiles, order history context, and account status.",
   },
   {
+    id: "reviews",
     key: "reviews",
     label: "Review Moderation",
     description:
       "Approve, reject, or hide submitted customer product reviews.",
   },
   {
+    id: "audit_logs",
     key: "audit_logs",
     label: "Audit Logs & Governance",
     description:
@@ -104,13 +123,22 @@ export function AuthenticatedPortalHome() {
           </Badge>
         }
         actions={
-          <Link
-            href="/categories"
-            className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-[var(--shadow-xs)] transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <FolderTree className="size-4" aria-hidden="true" />
-            Open categories
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/categories"
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3.5 text-sm font-medium text-foreground shadow-[var(--shadow-xs)] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <FolderTree className="size-4 text-muted-foreground" aria-hidden="true" />
+              Categories
+            </Link>
+            <Link
+              href="/products"
+              className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-[var(--shadow-xs)] transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Package className="size-4" aria-hidden="true" />
+              Open products
+            </Link>
+          </div>
         }
       />
 
@@ -179,7 +207,7 @@ export function AuthenticatedPortalHome() {
 
               return (
                 <li
-                  key={item.key}
+                  key={item.id}
                   className="flex items-start justify-between gap-4 border-b border-border px-5 py-4 last:border-b-0 sm:odd:border-r"
                 >
                   <div className="min-w-0 space-y-1">

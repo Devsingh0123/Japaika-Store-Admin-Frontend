@@ -1,4 +1,4 @@
-import { FolderTree, LayoutGrid, type LucideIcon } from "lucide-react";
+import { FolderTree, LayoutGrid, Package, type LucideIcon } from "lucide-react";
 import type { AdminRole } from "@/types/api";
 
 export interface AdminNavItem {
@@ -35,6 +35,11 @@ export const ADMIN_NAV_GROUPS: readonly AdminNavGroup[] = [
         href: "/categories",
         icon: FolderTree,
       },
+      {
+        label: "Products",
+        href: "/products",
+        icon: Package,
+      },
     ],
   },
 ];
@@ -53,6 +58,29 @@ export function getBreadcrumbsForPath(pathname: string): BreadcrumbSegment[] {
     return [
       { label: "Catalog" },
       { label: "Categories", href: "/categories" },
+    ];
+  }
+
+  if (pathname === "/products") {
+    return [
+      { label: "Catalog" },
+      { label: "Products", href: "/products" },
+    ];
+  }
+
+  if (pathname === "/products/new") {
+    return [
+      { label: "Catalog" },
+      { label: "Products", href: "/products" },
+      { label: "New product" },
+    ];
+  }
+
+  if (pathname.startsWith("/products/")) {
+    return [
+      { label: "Catalog" },
+      { label: "Products", href: "/products" },
+      { label: "Product details" },
     ];
   }
 

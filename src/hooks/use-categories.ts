@@ -103,6 +103,15 @@ export function useDeleteCategoryMutation() {
         );
         return;
       }
+      if (
+        error instanceof ApiError &&
+        error.code === "CATEGORY_HAS_PRODUCTS"
+      ) {
+        toast.error(
+          "Reassign or remove products under this category before deleting it."
+        );
+        return;
+      }
       const message =
         error instanceof ApiError
           ? error.message

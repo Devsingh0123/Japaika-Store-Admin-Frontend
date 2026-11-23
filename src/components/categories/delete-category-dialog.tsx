@@ -42,6 +42,12 @@ export function DeleteCategoryDialog({
           );
           return;
         }
+        if (error.code === "CATEGORY_HAS_PRODUCTS") {
+          setErrorMessage(
+            "This category still has products assigned to it. Reassign or remove those products before deleting this category."
+          );
+          return;
+        }
         setErrorMessage(error.message);
         return;
       }
