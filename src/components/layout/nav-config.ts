@@ -1,4 +1,10 @@
-import { FolderTree, LayoutGrid, Package, type LucideIcon } from "lucide-react";
+import {
+  FolderTree,
+  GalleryHorizontalEnd,
+  LayoutGrid,
+  Package,
+  type LucideIcon,
+} from "lucide-react";
 import type { AdminRole } from "@/types/api";
 
 export interface AdminNavItem {
@@ -39,6 +45,11 @@ export const ADMIN_NAV_GROUPS: readonly AdminNavGroup[] = [
         label: "Products",
         href: "/products",
         icon: Package,
+      },
+      {
+        label: "Banners",
+        href: "/banners",
+        icon: GalleryHorizontalEnd,
       },
     ],
   },
@@ -81,6 +92,13 @@ export function getBreadcrumbsForPath(pathname: string): BreadcrumbSegment[] {
       { label: "Catalog" },
       { label: "Products", href: "/products" },
       { label: "Product details" },
+    ];
+  }
+
+  if (pathname === "/banners" || pathname.startsWith("/banners/")) {
+    return [
+      { label: "Catalog" },
+      { label: "Banners", href: "/banners" },
     ];
   }
 

@@ -13,6 +13,7 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
+import { UploadGuidelines } from "@/components/common/upload-guidelines";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +31,7 @@ import {
 } from "@/hooks/use-products";
 import { ApiError } from "@/lib/api/error";
 import { formatFileSize } from "@/lib/format";
+import { UPLOAD_SPECS } from "@/lib/media/upload-specs";
 import {
   isImageMimeType,
   isVideoMimeType,
@@ -455,6 +457,8 @@ export function ProductMediaSection({
                 </p>
               </div>
             </button>
+
+            <UploadGuidelines guidelines={UPLOAD_SPECS.productMedia} />
           </>
         ) : null}
 

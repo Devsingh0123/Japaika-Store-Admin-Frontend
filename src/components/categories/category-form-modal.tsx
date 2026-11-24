@@ -38,6 +38,7 @@ import {
   type CategoryFormValues,
 } from "@/lib/categories/schemas";
 import { applyApiValidationErrors, zodResolver } from "@/lib/forms/zod";
+import { UPLOAD_SPECS } from "@/lib/media/upload-specs";
 import type { Category } from "@/types/category";
 
 interface CategoryFormModalProps {
@@ -455,6 +456,7 @@ function CategoryFormBody({
               previewUrl={previewUrl}
               fileName={selectedFile?.name ?? null}
               fileSizeBytes={selectedFile?.size ?? null}
+              guidelines={UPLOAD_SPECS.categoryImage}
               error={imageError}
               disabled={pending}
               onSelectFile={handleSelectFile}

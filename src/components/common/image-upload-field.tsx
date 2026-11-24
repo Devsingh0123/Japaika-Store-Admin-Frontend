@@ -3,7 +3,10 @@
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import Image from "next/image";
 import { ImagePlus, Trash2, UploadCloud } from "lucide-react";
+import { UploadGuidelines } from "@/components/common/upload-guidelines";
 import { Button } from "@/components/ui/button";
+import { formatFileSize } from "@/lib/format";
+import type { UploadGuideline } from "@/lib/media/upload-specs";
 import { cn } from "@/lib/utils";
 
 interface ImageUploadFieldProps {
@@ -13,16 +16,15 @@ interface ImageUploadFieldProps {
   fileSizeBytes?: number | null;
   accept?: string;
   helperText?: string;
+  guidelines?: UploadGuideline;
+  previewAlt?: string;
+  currentImageLabel?: string;
+  previewClassName?: string;
+  allowRemove?: boolean;
   error?: string | null;
   disabled?: boolean;
   onSelectFile: (file: File) => void;
   onRemoveImage: () => void;
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
 export function ImageUploadField({
@@ -31,12 +33,22 @@ export function ImageUploadField({
   fileName,
   fileSizeBytes,
   accept = "image/jpeg,image/png,image/webp,image/avif",
-  helperText = "JPEG, PNG, WebP, or AVIF up to 5 MB.",
+  helperText,
+  guidelines,
+  previewAlt = "Uploaded image preview",
+  currentImageLabel = "Current image",
+  previewClassName = "size-22",
+  allowRemove = true,
   error,
   disabled = false,
   onSelectFile,
   onRemoveImage,
 }: ImageUploadFieldProps) {
+  const resolvedHelperText =
+    helperText ??
+    (guidelines
+      ? "Drag & drop or browse to select an image."
+      : "JPEG, PNG, WebP, or AVIF up to 5 MB.");
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -98,10 +110,15 @@ export function ImageUploadField({
       >
         {previewUrl ? (
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="relative flex size-22 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card shadow-[var(--shadow-xs)]">
+            <div
+              className={cn(
+                "relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card shadow-[var(--shadow-xs)]",
+                previewClassName
+              )}
+            >
               <Image
                 src={previewUrl}
-                alt="Category preview"
+                alt={previewAlt}
                 fill
                 unoptimized
                 className="object-cover"
@@ -111,12 +128,12 @@ export function ImageUploadField({
             <div className="min-w-0 flex-1 space-y-2">
               <div className="space-y-0.5">
                 <p className="truncate text-sm font-medium text-foreground">
-                  {fileName ?? "Current category image"}
+                  {fileName ?? currentImageLabel}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {typeof fileSizeBytes === "number"
                     ? `${formatFileSize(fileSizeBytes)} — ready to upload`
-                    : helperText}
+                    : resolvedHelperText}
                 </p>
               </div>
 
@@ -132,17 +149,19 @@ export function ImageUploadField({
                   <ImagePlus className="size-3.5" aria-hidden="true" />
                   Replace image
                 </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={disabled}
-                  onClick={onRemoveImage}
-                  className="cursor-pointer text-destructive hover:bg-destructive-muted hover:text-destructive"
-                >
-                  <Trash2 className="size-3.5" aria-hidden="true" />
-                  Remove image
-                </Button>
+                {allowRemove ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={disabled}
+                    onClick={onRemoveImage}
+                    className="cursor-pointer text-destructive hover:bg-destructive-muted hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" aria-hidden="true" />
+                    Remove image
+                  </Button>
+                ) : null}
               </div>
             </div>
           </div>
@@ -155,7 +174,9 @@ export function ImageUploadField({
               <p className="text-sm font-medium text-foreground">
                 Drop an image here, or browse
               </p>
-              <p className="text-xs text-muted-foreground">{helperText}</p>
+              <p className="text-xs text-muted-foreground">
+                {resolvedHelperText}
+              </p>
             </div>
             <Button
               type="button"
@@ -171,6 +192,8 @@ export function ImageUploadField({
           </div>
         )}
       </div>
+
+      {guidelines ? <UploadGuidelines guidelines={guidelines} /> : null}
 
       {error ? (
         <p role="alert" className="text-xs font-medium text-destructive">

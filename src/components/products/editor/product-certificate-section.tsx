@@ -9,6 +9,7 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
+import { UploadGuidelines } from "@/components/common/upload-guidelines";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ import {
   useUpsertProductCertificateMutation,
 } from "@/hooks/use-products";
 import { formatFileSize } from "@/lib/format";
+import { UPLOAD_SPECS } from "@/lib/media/upload-specs";
 import { validateProductCertificateFile } from "@/lib/products/schemas";
 import type { ProductCertificate } from "@/types/product";
 
@@ -333,7 +335,7 @@ export function ProductCertificateSection({
                 Upload certificate image or PDF
               </p>
               <p className="text-xs text-muted-foreground">
-                JPEG, PNG, WebP, AVIF, or PDF · Max 5 MB
+                Lab report or authenticity document (optional).
               </p>
             </div>
           </button>
@@ -342,6 +344,10 @@ export function ProductCertificateSection({
             No authenticity certificate attached.
           </p>
         )}
+
+        {canEdit ? (
+          <UploadGuidelines guidelines={UPLOAD_SPECS.productCertificate} />
+        ) : null}
 
         {fileError ? (
           <p role="alert" className="text-xs text-destructive">

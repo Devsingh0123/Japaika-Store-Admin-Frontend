@@ -53,6 +53,14 @@ const ACCESS_DIRECTORY: readonly {
     href: "/products",
   },
   {
+    id: "banners",
+    key: "catalog",
+    label: "Banners & Hero Slides",
+    description:
+      "Curate homepage hero and promotional banners, desktop/mobile artwork, CTA links, order, and schedules.",
+    href: "/banners",
+  },
+  {
     id: "inventory",
     key: "inventory",
     label: "Inventory & Stock Controls",
