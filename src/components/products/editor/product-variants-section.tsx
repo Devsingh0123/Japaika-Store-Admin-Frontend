@@ -28,10 +28,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { formatINR } from "@/lib/format";
-import type { ProductFormValues } from "@/lib/products/schemas";
+import { formatCurrency } from "@/lib/format";
+import {
+  SUPPORTED_COUNTRIES,
+  SUPPORTED_MARKETS,
+  type ProductFormValues,
+} from "@/lib/products/schemas";
 import { cn } from "@/lib/utils";
-import type { ProductType, ProductVariant } from "@/types/product";
+import type {
+  ProductType,
+  ProductVariant,
+  VariantMarketPrice,
+} from "@/types/product";
 
 interface ProductVariantsSectionProps {
   control: Control<ProductFormValues>;
@@ -43,6 +51,128 @@ interface ProductVariantsSectionProps {
   canUpdateStock: boolean;
   savedVariants?: ProductVariant[];
   onOpenQuickStock?: () => void;
+}
+
+function MarketPriceCell({ entry }: { entry?: VariantMarketPrice }) {
+  if (!entry) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+
+  return (
+    <div className="space-y-0.5 text-right tabular-nums">
+      <p className="font-medium text-foreground">
+        {formatCurrency(entry.effectivePrice, entry.currency)}
+      </p>
+      {entry.salePrice !== null ? (
+        <p className="text-[0.7rem] text-muted-foreground line-through">
+          {formatCurrency(entry.price, entry.currency)}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+interface VariantRegionalPricesFieldsProps {
+  variantIndex: number;
+  idPrefix: string;
+  register: UseFormRegister<ProductFormValues>;
+  errors: FieldErrors<ProductFormValues>;
+}
+
+function VariantRegionalPricesFields({
+  variantIndex,
+  idPrefix,
+  register,
+  errors,
+}: VariantRegionalPricesFieldsProps) {
+  const priceErrors = errors.variants?.[variantIndex]?.prices;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-1">
+        <p className="text-xs font-medium text-foreground">
+          Regional pricing
+        </p>
+        <p className="text-[0.7rem] text-muted-foreground">
+          Leave a market blank if not sold there; at least one market is
+          required to publish.
+        </p>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {SUPPORTED_COUNTRIES.map((country) => {
+          const market = SUPPORTED_MARKETS[country];
+          const marketErrors = priceErrors?.[country];
+          const priceId = `${idPrefix}-${country.toLowerCase()}-price`;
+          const salePriceId = `${idPrefix}-${country.toLowerCase()}-sale-price`;
+
+          return (
+            <div
+              key={country}
+              className="space-y-3 rounded-lg border border-border bg-card p-3"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <Badge
+                    variant="secondary"
+                    className="px-1.5 py-0 font-mono text-[0.65rem]"
+                  >
+                    {country}
+                  </Badge>
+                  <span className="text-xs font-semibold text-foreground">
+                    {market.label} ({market.currency})
+                  </span>
+                </div>
+                {market.taxNote ? (
+                  <span className="text-[0.68rem] text-muted-foreground">
+                    {market.taxNote}
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <FormField
+                  label={`Regular price (${market.symbol})`}
+                  htmlFor={priceId}
+                  error={marketErrors?.price?.message}
+                >
+                  <Input
+                    id={priceId}
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder={market.placeholder}
+                    aria-invalid={Boolean(marketErrors?.price)}
+                    {...register(
+                      `variants.${variantIndex}.prices.${country}.price`
+                    )}
+                  />
+                </FormField>
+
+                <FormField
+                  label={`Sale price (${market.symbol})`}
+                  htmlFor={salePriceId}
+                  error={marketErrors?.salePrice?.message}
+                >
+                  <Input
+                    id={salePriceId}
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="Optional"
+                    aria-invalid={Boolean(marketErrors?.salePrice)}
+                    {...register(
+                      `variants.${variantIndex}.prices.${country}.salePrice`
+                    )}
+                  />
+                </FormField>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 interface OptionValueInputProps {
@@ -267,7 +397,7 @@ export function ProductVariantsSection({
           <div>
             <CardTitle>Pricing &amp; variants</CardTitle>
             <CardDescription>
-              All prices are GST-inclusive in INR.{" "}
+              Regional pricing for India (INR, incl. GST) and USA (USD).{" "}
               {productType === "variant"
                 ? `${savedVariants.length} variants configured.`
                 : "Simple single-variant product."}
@@ -289,12 +419,12 @@ export function ProductVariantsSection({
 
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[600px] border-collapse text-left text-xs">
+            <table className="w-full min-w-[640px] border-collapse text-left text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/45 font-medium text-muted-foreground">
                   <th className="px-5 py-2.5">Variant / SKU</th>
-                  <th className="px-4 py-2.5 text-right">Price</th>
-                  <th className="px-4 py-2.5 text-right">Sale price</th>
+                  <th className="px-4 py-2.5 text-right">India (INR)</th>
+                  <th className="px-4 py-2.5 text-right">USA (USD)</th>
                   <th className="px-4 py-2.5">Inventory</th>
                   <th className="px-5 py-2.5 text-right">Status</th>
                 </tr>
@@ -317,11 +447,11 @@ export function ProductVariantsSection({
                         {variant.sku}
                       </p>
                     </td>
-                    <td className="px-4 py-3 text-right font-medium tabular-nums text-foreground">
-                      {formatINR(variant.price)}
+                    <td className="px-4 py-3">
+                      <MarketPriceCell entry={variant.prices?.IN} />
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
-                      {variant.salePrice ? formatINR(variant.salePrice) : "—"}
+                    <td className="px-4 py-3">
+                      <MarketPriceCell entry={variant.prices?.US} />
                     </td>
                     <td className="px-4 py-3">
                       <span className="font-medium tabular-nums text-foreground">
@@ -353,8 +483,9 @@ export function ProductVariantsSection({
         <div>
           <CardTitle>Pricing &amp; variants</CardTitle>
           <CardDescription>
-            All prices are GST-inclusive in Indian Rupees (₹). Choose between a
-            single-SKU simple product or custom multi-option variants.
+            Set regional pricing for India (INR, incl. GST) and USA (USD).
+            Choose between a single-SKU simple product or custom multi-option
+            variants.
           </CardDescription>
         </div>
       </CardHeader>
@@ -435,41 +566,12 @@ export function ProductVariantsSection({
         {/* SIMPLE PRODUCT FORM */}
         {productType === "simple" ? (
           <div className="space-y-4 rounded-xl border border-border bg-muted/20 p-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                label="Regular price (₹, incl. GST)"
-                htmlFor="simple-price"
-                required
-                error={errors.variants?.[0]?.price?.message}
-              >
-                <Input
-                  id="simple-price"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  placeholder="e.g. 4999"
-                  aria-invalid={Boolean(errors.variants?.[0]?.price)}
-                  {...register("variants.0.price")}
-                />
-              </FormField>
-
-              <FormField
-                label="Sale price (₹)"
-                htmlFor="simple-sale-price"
-                hint="Optional discounted price (must be less than regular price)."
-                error={errors.variants?.[0]?.salePrice?.message}
-              >
-                <Input
-                  id="simple-sale-price"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  placeholder="Optional"
-                  aria-invalid={Boolean(errors.variants?.[0]?.salePrice)}
-                  {...register("variants.0.salePrice")}
-                />
-              </FormField>
-            </div>
+            <VariantRegionalPricesFields
+              variantIndex={0}
+              idPrefix="simple"
+              register={register}
+              errors={errors}
+            />
 
             <div className="grid gap-4 sm:grid-cols-3">
               <FormField
@@ -840,41 +942,16 @@ export function ProductVariantsSection({
                         </p>
                       )}
 
+                      {/* Regional Pricing */}
+                      <VariantRegionalPricesFields
+                        variantIndex={vIdx}
+                        idPrefix={`v-${vIdx}`}
+                        register={register}
+                        errors={errors}
+                      />
+
                       {/* Variant Details */}
-                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        <FormField
-                          label="Regular price (₹)"
-                          htmlFor={`v-${vIdx}-price`}
-                          required
-                          error={rowErrors?.price?.message}
-                        >
-                          <Input
-                            id={`v-${vIdx}-price`}
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            placeholder="0.00"
-                            aria-invalid={Boolean(rowErrors?.price)}
-                            {...register(`variants.${vIdx}.price`)}
-                          />
-                        </FormField>
-
-                        <FormField
-                          label="Sale price (₹)"
-                          htmlFor={`v-${vIdx}-sale`}
-                          error={rowErrors?.salePrice?.message}
-                        >
-                          <Input
-                            id={`v-${vIdx}-sale`}
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            placeholder="Optional"
-                            aria-invalid={Boolean(rowErrors?.salePrice)}
-                            {...register(`variants.${vIdx}.salePrice`)}
-                          />
-                        </FormField>
-
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         <FormField
                           label="SKU"
                           htmlFor={`v-${vIdx}-sku`}

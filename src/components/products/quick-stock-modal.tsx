@@ -24,8 +24,11 @@ import {
   useUpdateVariantStockMutation,
 } from "@/hooks/use-products";
 import { ApiError } from "@/lib/api/error";
-import { formatINR } from "@/lib/format";
-import { quickStockFormSchema } from "@/lib/products/schemas";
+import { formatCurrency } from "@/lib/format";
+import {
+  quickStockFormSchema,
+  SUPPORTED_COUNTRIES,
+} from "@/lib/products/schemas";
 import type { ProductListItem, ProductVariant } from "@/types/product";
 
 interface QuickStockModalProps {
@@ -55,6 +58,15 @@ function VariantStockRow({ productId, variant }: VariantStockRowProps) {
     stockQuantity !== String(variant.stockQuantity) ||
     lowStockThreshold !== String(variant.lowStockThreshold) ||
     isActive !== variant.isActive;
+
+  const priceSummaryText =
+    SUPPORTED_COUNTRIES.map((country) => {
+      const entry = variant.prices?.[country];
+      if (!entry) return null;
+      return `${country} ${formatCurrency(entry.effectivePrice, entry.currency)}`;
+    })
+      .filter(Boolean)
+      .join(" · ") || "Unpriced";
 
   const optionSummary = variant.optionValues
     ? Object.entries(variant.optionValues)
@@ -117,7 +129,7 @@ function VariantStockRow({ productId, variant }: VariantStockRowProps) {
             <span className="font-mono">{variant.sku}</span>
             <span>·</span>
             <span className="tabular-nums font-medium text-foreground">
-              {formatINR(variant.effectivePrice)}
+              {priceSummaryText}
             </span>
             {optionSummary ? (
               <>

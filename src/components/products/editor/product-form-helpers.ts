@@ -1,9 +1,15 @@
-import type { ProductFormValues } from "@/lib/products/schemas";
+import {
+  SUPPORTED_COUNTRIES,
+  SUPPORTED_MARKETS,
+  type ProductFormValues,
+} from "@/lib/products/schemas";
 import type {
   CreateProductPayload,
   ProductDetail,
   ProductStatus,
   ProductVariantInput,
+  VariantPricesInputMap,
+  VariantPricesMap,
 } from "@/types/product";
 
 function toNumericString(val: string | number | null | undefined): string {
@@ -29,6 +35,54 @@ function toNullableNumber(val: string): number | null {
   return Number.isFinite(num) ? num : null;
 }
 
+function createEmptyPricesForm(): ProductFormValues["variants"][number]["prices"] {
+  return {
+    IN: { price: "", salePrice: "" },
+    US: { price: "", salePrice: "" },
+  };
+}
+
+function mapVariantPricesToForm(
+  prices?: VariantPricesMap | null
+): ProductFormValues["variants"][number]["prices"] {
+  return {
+    IN: {
+      price: toNumericString(prices?.IN?.price),
+      salePrice: toNumericString(prices?.IN?.salePrice),
+    },
+    US: {
+      price: toNumericString(prices?.US?.price),
+      salePrice: toNumericString(prices?.US?.salePrice),
+    },
+  };
+}
+
+function buildVariantPricesPayload(
+  formPrices?: ProductFormValues["variants"][number]["prices"]
+): VariantPricesInputMap {
+  const result: VariantPricesInputMap = {};
+
+  for (const country of SUPPORTED_COUNTRIES) {
+    const entry = formPrices?.[country];
+    if (!entry || entry.price.trim() === "") {
+      continue;
+    }
+
+    const regular = Number(entry.price.trim());
+    if (!Number.isFinite(regular)) {
+      continue;
+    }
+
+    result[country] = {
+      currency: SUPPORTED_MARKETS[country].currency,
+      price: regular,
+      salePrice: toNullableNumber(entry.salePrice),
+    };
+  }
+
+  return result;
+}
+
 export function createEmptyVariantRow(
   optionValues: Record<string, string> = {},
   isDefault = false
@@ -37,8 +91,7 @@ export function createEmptyVariantRow(
     sku: "",
     title: "",
     optionValues,
-    price: "",
-    salePrice: "",
+    prices: createEmptyPricesForm(),
     stockQuantity: "0",
     lowStockThreshold: "5",
     isActive: true,
@@ -79,8 +132,7 @@ export function getProductFormDefaultValues(
           sku: "",
           title: "Default",
           optionValues: {},
-          price: "",
-          salePrice: "",
+          prices: createEmptyPricesForm(),
           stockQuantity: "0",
           lowStockThreshold: "5",
           isActive: true,
@@ -97,8 +149,7 @@ export function getProductFormDefaultValues(
           sku: v.sku,
           title: v.title ?? "",
           optionValues: v.optionValues ? { ...v.optionValues } : {},
-          price: toNumericString(v.price),
-          salePrice: toNumericString(v.salePrice),
+          prices: mapVariantPricesToForm(v.prices),
           stockQuantity: String(v.stockQuantity),
           lowStockThreshold: String(v.lowStockThreshold),
           isActive: v.isActive,
@@ -177,8 +228,7 @@ export function buildProductPayload(
         ...(first?.sku.trim() ? { sku: first.sku.trim().toUpperCase() } : {}),
         title: first?.title.trim() || "Default",
         optionValues: null,
-        price: Number(first?.price || 0),
-        salePrice: toNullableNumber(first?.salePrice ?? ""),
+        prices: buildVariantPricesPayload(first?.prices),
         stockQuantity: Number(first?.stockQuantity || 0),
         lowStockThreshold: Number(first?.lowStockThreshold || 5),
         isActive: first?.isActive ?? true,
@@ -212,8 +262,7 @@ export function buildProductPayload(
         ...(row.sku.trim() ? { sku: row.sku.trim().toUpperCase() } : {}),
         title: row.title.trim() || fallbackTitle || `Variant ${index + 1}`,
         optionValues: filteredOptionValues,
-        price: Number(row.price || 0),
-        salePrice: toNullableNumber(row.salePrice),
+        prices: buildVariantPricesPayload(row.prices),
         stockQuantity: Number(row.stockQuantity || 0),
         lowStockThreshold: Number(row.lowStockThreshold || 5),
         isActive: row.isActive,

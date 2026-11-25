@@ -7,6 +7,40 @@ export type ProductSortBy = "createdAt" | "updatedAt" | "name" | "status";
 export type ProductSortOrder = "asc" | "desc";
 export type ProductMediaType = "image" | "video";
 
+export type PricingCountry = "IN" | "US";
+export type PricingCurrency = "INR" | "USD";
+
+export interface VariantMarketPrice {
+  currency: PricingCurrency;
+  price: number;
+  salePrice: number | null;
+  effectivePrice: number;
+}
+
+export type VariantPricesMap = Partial<
+  Record<PricingCountry, VariantMarketPrice>
+>;
+
+export interface VariantMarketPriceInput {
+  currency: PricingCurrency;
+  price: number;
+  salePrice?: number | null;
+}
+
+export type VariantPricesInputMap = Partial<
+  Record<PricingCountry, VariantMarketPriceInput>
+>;
+
+export interface MarketPriceRange {
+  currency: PricingCurrency;
+  minPrice: string;
+  maxPrice: string;
+}
+
+export type ProductPriceSummary = Partial<
+  Record<PricingCountry, MarketPriceRange>
+>;
+
 export interface ProductSpecification {
   key: string;
   value: string;
@@ -68,9 +102,7 @@ export interface ProductVariant {
   title: string | null;
   optionValues: Record<string, string> | null;
   optionSignature: string | null;
-  price: string;
-  salePrice: string | null;
-  effectivePrice: string;
+  prices: VariantPricesMap;
   stockQuantity: number;
   lowStockThreshold: number;
   isActive: boolean;
@@ -95,8 +127,7 @@ export interface ProductListItem {
   hsnCode: string | null;
   isFeatured: boolean;
   variantCount: number;
-  minPrice: string;
-  maxPrice: string;
+  priceSummary: ProductPriceSummary;
   totalStock: number;
   hasLowStock: boolean;
   publishedAt: string | null;
@@ -142,6 +173,7 @@ export interface ProductListQuery {
   productType?: ProductType;
   isFeatured?: boolean;
   stockStatus?: ProductStockStatus;
+  country?: PricingCountry;
   sortBy?: ProductSortBy;
   sortOrder?: ProductSortOrder;
 }
@@ -185,8 +217,7 @@ export interface ProductVariantInput {
   sku?: string;
   title?: string | null;
   optionValues?: Record<string, string> | null;
-  price: number;
-  salePrice?: number | null;
+  prices: VariantPricesInputMap;
   stockQuantity: number;
   lowStockThreshold?: number;
   isActive?: boolean;

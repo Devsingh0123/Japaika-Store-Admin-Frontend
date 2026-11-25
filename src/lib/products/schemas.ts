@@ -1,4 +1,35 @@
 import { z } from "zod";
+import type { PricingCountry, PricingCurrency } from "@/types/product";
+
+export const SUPPORTED_COUNTRIES = ["IN", "US"] as const;
+
+export const SUPPORTED_MARKETS: Record<
+  PricingCountry,
+  {
+    country: PricingCountry;
+    currency: PricingCurrency;
+    label: string;
+    symbol: string;
+    taxNote?: string;
+    placeholder: string;
+  }
+> = {
+  IN: {
+    country: "IN",
+    currency: "INR",
+    label: "India",
+    symbol: "₹",
+    taxNote: "incl. GST",
+    placeholder: "e.g. 4999",
+  },
+  US: {
+    country: "US",
+    currency: "USD",
+    label: "USA",
+    symbol: "$",
+    placeholder: "e.g. 69",
+  },
+};
 
 export const ALLOWED_GST_RATES = [0, 0.25, 3, 5, 12, 18, 28] as const;
 
@@ -125,22 +156,12 @@ export const productVariantOptionSchema = z.object({
     .max(30, "Maximum 30 values per option."),
 });
 
-export const productVariantFormSchema = z
+const marketPriceFormSchema = z
   .object({
-    id: z.string().optional(),
-    sku: z
-      .string()
-      .trim()
-      .max(64, "SKU must not exceed 64 characters."),
-    title: z
-      .string()
-      .trim()
-      .max(160, "Variant title must not exceed 160 characters."),
-    optionValues: z.record(z.string(), z.string()),
     price: z
       .string()
       .trim()
-      .refine((v) => v !== "" && Number.isFinite(Number(v)) && Number(v) >= 0, {
+      .refine((v) => v === "" || (Number.isFinite(Number(v)) && Number(v) >= 0), {
         message: "Price must be a non-negative number.",
       }),
     salePrice: z
@@ -149,25 +170,20 @@ export const productVariantFormSchema = z
       .refine((v) => v === "" || (Number.isFinite(Number(v)) && Number(v) > 0), {
         message: "Sale price must be greater than 0.",
       }),
-    stockQuantity: z
-      .string()
-      .trim()
-      .refine(isNonNegativeInteger, {
-        message: "Stock must be a whole number (0 or more).",
-      }),
-    lowStockThreshold: z
-      .string()
-      .trim()
-      .refine(isNonNegativeInteger, {
-        message: "Threshold must be a whole number (0 or more).",
-      }),
-    isActive: z.boolean(),
-    isDefault: z.boolean(),
   })
-  .superRefine((variant, ctx) => {
-    if (variant.salePrice !== "") {
-      const regular = Number(variant.price);
-      const sale = Number(variant.salePrice);
+  .superRefine((entry, ctx) => {
+    if (entry.salePrice !== "") {
+      if (entry.price === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["price"],
+          message: "Enter a regular price before setting a sale price.",
+        });
+        return;
+      }
+
+      const regular = Number(entry.price);
+      const sale = Number(entry.salePrice);
       if (Number.isFinite(regular) && Number.isFinite(sale) && sale >= regular) {
         ctx.addIssue({
           code: "custom",
@@ -177,6 +193,37 @@ export const productVariantFormSchema = z
       }
     }
   });
+
+export const productVariantFormSchema = z.object({
+  id: z.string().optional(),
+  sku: z
+    .string()
+    .trim()
+    .max(64, "SKU must not exceed 64 characters."),
+  title: z
+    .string()
+    .trim()
+    .max(160, "Variant title must not exceed 160 characters."),
+  optionValues: z.record(z.string(), z.string()),
+  prices: z.object({
+    IN: marketPriceFormSchema,
+    US: marketPriceFormSchema,
+  }),
+  stockQuantity: z
+    .string()
+    .trim()
+    .refine(isNonNegativeInteger, {
+      message: "Stock must be a whole number (0 or more).",
+    }),
+  lowStockThreshold: z
+    .string()
+    .trim()
+    .refine(isNonNegativeInteger, {
+      message: "Threshold must be a whole number (0 or more).",
+    }),
+  isActive: z.boolean(),
+  isDefault: z.boolean(),
+});
 
 export const productFormSchema = z
   .object({

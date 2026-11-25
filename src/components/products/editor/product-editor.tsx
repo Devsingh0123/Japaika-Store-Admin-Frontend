@@ -61,6 +61,7 @@ import {
   isImageMimeType,
   productFormSchema,
   slugifyProductName,
+  SUPPORTED_COUNTRIES,
   type ProductFormValues,
 } from "@/lib/products/schemas";
 import type { AdminRole } from "@/types/api";
@@ -156,9 +157,12 @@ export function ProductEditor({ mode, product }: ProductEditorProps) {
       ? queuedMediaFiles.filter((f) => isImageMimeType(f.type)).length
       : (product?.media ?? []).filter((m) => m.mediaType === "image").length;
 
-  const hasActivePricedVariant = watchedVariants.some(
-    (v) => v.isActive && Number(v.price) > 0
-  );
+  const activeVariants = watchedVariants.filter((v) => v.isActive);
+  const hasActivePricedVariant =
+    activeVariants.length > 0 &&
+    activeVariants.every((v) =>
+      SUPPORTED_COUNTRIES.some((country) => Number(v.prices?.[country]?.price) > 0)
+    );
 
   const hasValidVariantOptions =
     watchedProductType === "simple" ||
@@ -176,7 +180,7 @@ export function ProductEditor({ mode, product }: ProductEditorProps) {
       ready: imageCount >= 1,
     },
     {
-      label: "Active variant priced > ₹0",
+      label: "Active variants priced in IN or US",
       ready: hasActivePricedVariant,
     },
     ...(watchedProductType === "variant"
@@ -1012,7 +1016,7 @@ export function ProductEditor({ mode, product }: ProductEditorProps) {
               <FormField
                 label="GST slab (%)"
                 htmlFor="product-gst"
-                hint="Storefront prices already include this GST percentage."
+                hint="Applies to India (INR) pricing; INR prices are GST-inclusive."
                 error={errors.gstRate?.message}
               >
                 <Controller

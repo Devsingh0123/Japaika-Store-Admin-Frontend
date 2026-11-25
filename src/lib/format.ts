@@ -1,3 +1,5 @@
+import type { PricingCurrency } from "@/types/product";
+
 export function formatDate(isoString: string): string {
   const date = new Date(isoString);
   if (Number.isNaN(date.getTime())) {
@@ -28,42 +30,44 @@ export function formatDateTime(
   }).format(date);
 }
 
-export function formatINR(
-  value: string | number | null | undefined
+const CURRENCY_LOCALES: Record<PricingCurrency, string> = {
+  INR: "en-IN",
+  USD: "en-US",
+};
+
+export function formatCurrency(
+  value: string | number | null | undefined,
+  currency: PricingCurrency = "INR"
 ): string {
-  if (value === null || value === undefined || value === "") {
-    return "₹0";
-  }
+  const numeric =
+    value === null || value === undefined || value === "" ? 0 : Number(value);
+  const safeValue = Number.isFinite(numeric) ? numeric : 0;
 
-  const numeric = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(numeric)) {
-    return "₹0";
-  }
-
-  return new Intl.NumberFormat("en-IN", {
+  return new Intl.NumberFormat(CURRENCY_LOCALES[currency], {
     style: "currency",
-    currency: "INR",
-    minimumFractionDigits: Number.isInteger(numeric) ? 0 : 2,
+    currency,
+    minimumFractionDigits: Number.isInteger(safeValue) ? 0 : 2,
     maximumFractionDigits: 2,
-  }).format(numeric);
+  }).format(safeValue);
 }
 
 export function formatPriceRange(
   minPrice: string | number,
-  maxPrice: string | number
+  maxPrice: string | number,
+  currency: PricingCurrency
 ): string {
   const min = Number(minPrice);
   const max = Number(maxPrice);
 
   if (!Number.isFinite(min) && !Number.isFinite(max)) {
-    return "₹0";
+    return formatCurrency(0, currency);
   }
 
   if (min === max) {
-    return formatINR(min);
+    return formatCurrency(min, currency);
   }
 
-  return `${formatINR(min)} – ${formatINR(max)}`;
+  return `${formatCurrency(min, currency)} – ${formatCurrency(max, currency)}`;
 }
 
 export function formatFileSize(bytes: number): string {

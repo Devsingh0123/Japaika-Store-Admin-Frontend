@@ -40,10 +40,13 @@ import {
 } from "@/hooks/use-products";
 import { ApiError } from "@/lib/api/error";
 import { formatDate, formatPriceRange } from "@/lib/format";
+import { SUPPORTED_COUNTRIES, SUPPORTED_MARKETS } from "@/lib/products/schemas";
 import { cn } from "@/lib/utils";
 import type { AdminRole } from "@/types/api";
 import type {
+  PricingCountry,
   ProductListItem,
+  ProductPriceSummary,
   ProductSortBy,
   ProductSortOrder,
   ProductStatus,
@@ -68,6 +71,55 @@ type SortOptionValue =
   | "name:asc"
   | "name:desc"
   | "status:asc";
+
+function ProductMarketPrices({
+  priceSummary,
+  align = "right",
+}: {
+  priceSummary: ProductPriceSummary;
+  align?: "left" | "right";
+}) {
+  const entries = SUPPORTED_COUNTRIES.map((country) => ({
+    country,
+    range: priceSummary?.[country],
+  })).filter(
+    (
+      item
+    ): item is {
+      country: PricingCountry;
+      range: NonNullable<ProductPriceSummary[PricingCountry]>;
+    } => Boolean(item.range)
+  );
+
+  if (entries.length === 0) {
+    return (
+      <span className="text-xs text-muted-foreground">Unpriced</span>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-0.5",
+        align === "right" ? "items-end" : "items-start"
+      )}
+    >
+      {entries.map(({ country, range }) => (
+        <div
+          key={country}
+          className="inline-flex items-center gap-1.5 tabular-nums"
+        >
+          <span className="rounded bg-muted px-1 py-0.5 font-mono text-[0.625rem] font-semibold text-muted-foreground">
+            {country}
+          </span>
+          <span className="text-xs font-semibold text-foreground">
+            {formatPriceRange(range.minPrice, range.maxPrice, range.currency)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function ProductsSkeleton() {
   return (
@@ -105,6 +157,7 @@ export function ProductsManager() {
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [typeFilter, setTypeFilter] = useState<"" | ProductType>("");
   const [stockFilter, setStockFilter] = useState<"" | ProductStockStatus>("");
+  const [countryFilter, setCountryFilter] = useState<"" | PricingCountry>("");
   const [featuredFilter, setFeaturedFilter] = useState<"" | "true" | "false">(
     ""
   );
@@ -139,6 +192,7 @@ export function ProductsManager() {
     categoryId: categoryFilter || undefined,
     productType: typeFilter || undefined,
     stockStatus: stockFilter || undefined,
+    country: countryFilter || undefined,
     isFeatured:
       featuredFilter === "" ? undefined : featuredFilter === "true",
     sortBy,
@@ -162,6 +216,7 @@ export function ProductsManager() {
     categoryFilter !== "" ||
     typeFilter !== "" ||
     stockFilter !== "" ||
+    countryFilter !== "" ||
     featuredFilter !== "" ||
     sortOption !== "createdAt:desc";
 
@@ -172,6 +227,7 @@ export function ProductsManager() {
     setCategoryFilter("");
     setTypeFilter("");
     setStockFilter("");
+    setCountryFilter("");
     setFeaturedFilter("");
     setSortOption("createdAt:desc");
     setPage(1);
@@ -214,7 +270,7 @@ export function ProductsManager() {
       <PageHeader
         title="Products"
         count={productsQuery.data?.pagination.totalItems}
-        description="Manage simple and variant products, GST-inclusive INR pricing, inventory levels, media, and authenticity certificates."
+        description="Manage simple and variant products, regional India (INR) & USA (USD) pricing, inventory levels, media, and authenticity certificates."
         badge={roleBadge}
         actions={
           <RoleGate allowedRoles={CATALOG_WRITE_ROLES}>
@@ -314,6 +370,24 @@ export function ProductsManager() {
 
           <div className="flex flex-wrap items-center justify-between gap-2.5">
             <div className="grid w-full gap-2.5 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+              <Select
+                aria-label="Filter by market"
+                value={countryFilter}
+                onChange={(e) => {
+                  setCountryFilter(e.target.value as "" | PricingCountry);
+                  setPage(1);
+                }}
+                className="sm:w-40"
+              >
+                <option value="">All markets</option>
+                {SUPPORTED_COUNTRIES.map((code) => (
+                  <option key={code} value={code}>
+                    {SUPPORTED_MARKETS[code].label} (
+                    {SUPPORTED_MARKETS[code].currency})
+                  </option>
+                ))}
+              </Select>
+
               <Select
                 aria-label="Filter by product type"
                 value={typeFilter}
@@ -489,17 +563,17 @@ export function ProductsManager() {
                     </Badge>
                   </div>
 
-                  <div className="flex items-center justify-between gap-3 border-t border-border/70 pt-2.5 text-xs">
-                    <div className="min-w-0 truncate text-muted-foreground">
-                      {product.category?.name ?? "Uncategorized"}
+                  <div className="flex items-start justify-between gap-3 border-t border-border/70 pt-2.5 text-xs">
+                    <div className="min-w-0 space-y-0.5 text-muted-foreground">
+                      <p className="truncate">
+                        {product.category?.name ?? "Uncategorized"}
+                      </p>
+                      <p className="tabular-nums">
+                        {product.totalStock} in stock
+                      </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <span className="font-semibold tabular-nums text-foreground">
-                        {formatPriceRange(product.minPrice, product.maxPrice)}
-                      </span>
-                      <span className="ml-1.5 text-muted-foreground tabular-nums">
-                        · {product.totalStock} in stock
-                      </span>
+                      <ProductMarketPrices priceSummary={product.priceSummary} />
                     </div>
                   </div>
                 </li>
@@ -526,7 +600,7 @@ export function ProductsManager() {
                       Type
                     </th>
                     <th scope="col" className="px-4 py-3 text-right">
-                      Price (incl. GST)
+                      Pricing (IN / US)
                     </th>
                     <th scope="col" className="px-4 py-3">
                       Inventory
@@ -609,10 +683,8 @@ export function ProductsManager() {
                       </td>
 
                       <td className="px-4 py-3.5 text-right">
-                        <p className="font-semibold tabular-nums text-foreground">
-                          {formatPriceRange(product.minPrice, product.maxPrice)}
-                        </p>
-                        <p className="text-[0.7rem] tabular-nums text-muted-foreground">
+                        <ProductMarketPrices priceSummary={product.priceSummary} />
+                        <p className="mt-0.5 text-[0.7rem] tabular-nums text-muted-foreground">
                           GST {Number(product.gstRate)}%
                           {product.hsnCode ? ` · HSN ${product.hsnCode}` : ""}
                         </p>

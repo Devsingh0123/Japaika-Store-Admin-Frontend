@@ -39,6 +39,7 @@ export async function listProducts(
     params.isFeatured = String(query.isFeatured);
   }
   if (query.stockStatus) params.stockStatus = query.stockStatus;
+  if (query.country) params.country = query.country;
   if (query.sortBy) params.sortBy = query.sortBy;
   if (query.sortOrder) params.sortOrder = query.sortOrder;
 
