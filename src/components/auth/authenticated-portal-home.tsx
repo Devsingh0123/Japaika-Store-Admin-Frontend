@@ -87,7 +87,8 @@ const ACCESS_DIRECTORY: readonly {
     key: "coupons",
     label: "Coupons & Promotions",
     description:
-      "Configure discount rules, eligibility thresholds, and usage limits.",
+      "Configure percentage discounts, INR/USD cart thresholds, caps, visibility, and usage limits.",
+    href: "/coupons",
   },
   {
     id: "customers",

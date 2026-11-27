@@ -3,6 +3,7 @@ import {
   GalleryHorizontalEnd,
   LayoutGrid,
   Package,
+  TicketPercent,
   type LucideIcon,
 } from "lucide-react";
 import type { AdminRole } from "@/types/api";
@@ -50,6 +51,11 @@ export const ADMIN_NAV_GROUPS: readonly AdminNavGroup[] = [
         label: "Banners",
         href: "/banners",
         icon: GalleryHorizontalEnd,
+      },
+      {
+        label: "Coupons",
+        href: "/coupons",
+        icon: TicketPercent,
       },
     ],
   },
@@ -99,6 +105,13 @@ export function getBreadcrumbsForPath(pathname: string): BreadcrumbSegment[] {
     return [
       { label: "Catalog" },
       { label: "Banners", href: "/banners" },
+    ];
+  }
+
+  if (pathname === "/coupons" || pathname.startsWith("/coupons/")) {
+    return [
+      { label: "Catalog" },
+      { label: "Coupons", href: "/coupons" },
     ];
   }
 
