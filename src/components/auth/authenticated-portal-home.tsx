@@ -73,14 +73,24 @@ const ACCESS_DIRECTORY: readonly {
     key: "orders",
     label: "Orders & Fulfillment",
     description:
-      "Review orders, advance fulfillment states, and attach courier AWB tracking.",
+      "Review orders, advance fulfillment states, attach courier AWB tracking, and manage cancellations.",
+    href: "/orders",
   },
   {
     id: "payments",
     key: "payments",
     label: "Payments & Refunds",
     description:
-      "Inspect payment records, reconcile transactions, and issue guarded refunds.",
+      "Inspect payment records, reconcile Razorpay transactions, and issue guarded refunds.",
+    href: "/orders",
+  },
+  {
+    id: "shipping",
+    key: "shipping",
+    label: "Shipping Settings",
+    description:
+      "Configure India (INR) and USA (USD) flat shipping rates, free-shipping thresholds, and delivery windows.",
+    href: "/shipping",
   },
   {
     id: "coupons",

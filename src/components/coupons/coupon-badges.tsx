@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Check, Copy, EyeOff, Globe } from "lucide-react";
-import { toast } from "sonner";
+import { EyeOff, Globe } from "lucide-react";
+import { CopyButton } from "@/components/common/copy-button";
 import { StatusBadge } from "@/components/common/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -65,35 +64,12 @@ export function CopyCodeButton({
   code: string;
   className?: string;
 }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      toast.success(`Copied "${code}"`);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      toast.error("Unable to copy coupon code.");
-    }
-  };
-
   return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      aria-label={`Copy coupon code ${code}`}
-      title="Copy code"
-      className={cn(
-        "inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        className
-      )}
-    >
-      {copied ? (
-        <Check className="size-3.5 text-success" aria-hidden="true" />
-      ) : (
-        <Copy className="size-3.5" aria-hidden="true" />
-      )}
-    </button>
+    <CopyButton
+      value={code}
+      ariaLabel={`Copy coupon code ${code}`}
+      toastMessage={`Copied "${code}"`}
+      className={className}
+    />
   );
 }

@@ -25,6 +25,7 @@ export type AdminModuleKey =
   | "inventory"
   | "orders"
   | "payments"
+  | "shipping"
   | "coupons"
   | "customers"
   | "reviews"
@@ -44,6 +45,7 @@ export const MODULE_ROLE_ACCESS: Record<AdminModuleKey, readonly AdminRole[]> =
     inventory: ["super_admin", "catalog_manager", "operations_manager"],
     orders: ["super_admin", "operations_manager", "support_moderator"],
     payments: ["super_admin", "operations_manager"],
+    shipping: ["super_admin", "operations_manager"],
     coupons: ["super_admin", "catalog_manager"],
     customers: ["super_admin", "operations_manager", "support_moderator"],
     reviews: ["super_admin", "support_moderator"],

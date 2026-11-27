@@ -3,9 +3,12 @@ import {
   GalleryHorizontalEnd,
   LayoutGrid,
   Package,
+  ShoppingBag,
   TicketPercent,
+  Truck,
   type LucideIcon,
 } from "lucide-react";
+import { MODULE_ROLE_ACCESS } from "@/lib/auth/rbac";
 import type { AdminRole } from "@/types/api";
 
 export interface AdminNavItem {
@@ -56,6 +59,23 @@ export const ADMIN_NAV_GROUPS: readonly AdminNavGroup[] = [
         label: "Coupons",
         href: "/coupons",
         icon: TicketPercent,
+      },
+    ],
+  },
+  {
+    id: "operations",
+    label: "Operations",
+    items: [
+      {
+        label: "Orders",
+        href: "/orders",
+        icon: ShoppingBag,
+        allowedRoles: MODULE_ROLE_ACCESS.orders,
+      },
+      {
+        label: "Shipping",
+        href: "/shipping",
+        icon: Truck,
       },
     ],
   },
@@ -112,6 +132,28 @@ export function getBreadcrumbsForPath(pathname: string): BreadcrumbSegment[] {
     return [
       { label: "Catalog" },
       { label: "Coupons", href: "/coupons" },
+    ];
+  }
+
+  if (pathname === "/orders") {
+    return [
+      { label: "Operations" },
+      { label: "Orders", href: "/orders" },
+    ];
+  }
+
+  if (pathname.startsWith("/orders/")) {
+    return [
+      { label: "Operations" },
+      { label: "Orders", href: "/orders" },
+      { label: "Order details" },
+    ];
+  }
+
+  if (pathname === "/shipping" || pathname.startsWith("/shipping/")) {
+    return [
+      { label: "Operations" },
+      { label: "Shipping", href: "/shipping" },
     ];
   }
 
