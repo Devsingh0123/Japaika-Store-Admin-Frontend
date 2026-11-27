@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Provider as ReduxProvider } from "react-redux";
 import { Toaster } from "@/components/ui/sonner";
 import { createQueryClient } from "@/lib/query/query-client";
@@ -23,6 +24,9 @@ export function AppProviders({ children }: AppProvidersProps) {
         <QueryClientProvider client={queryClient}>
           <AuthSessionProvider>{children}</AuthSessionProvider>
           <Toaster />
+          {process.env.NODE_ENV === "development" ? (
+            <ReactQueryDevtools initialIsOpen={false} />
+          ) : null}
         </QueryClientProvider>
       </ReduxProvider>
     </ThemeProvider>
